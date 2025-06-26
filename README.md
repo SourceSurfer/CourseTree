@@ -4,11 +4,8 @@
 
 ## Главная форма
 
-![Главная форма](Images/MainForm.png)
+![Filter Form](CourseTree/Images/MainForm.png)
 
 ## Форма фильтрации
 
-![Форма фильтрации](Images/Filter%20Form.png)
-
-
-
+![Filter Form](CourseTree/Images/Filter%20Form.png)
