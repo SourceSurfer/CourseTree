@@ -1,0 +1,92 @@
+﻿@model Web.Models.CourseFilterViewModel
+@{
+    ViewData["Title"] = "Курсы";
+}
+
+<h1>Курсы</h1>
+
+<div class="mb-3">
+    <a asp-action="Ajax" class="btn btn-info">AJAX версия</a>
+</div>
+
+<form method="get" class="mb-4">
+    <div class="row">
+        <div class="col-md-3">
+            <label class="form-label">Предмет:</label>
+            <select name="subject" class="form-select">
+                <option value="">Все предметы</option>
+                @foreach (var subj in Model.Subjects)
+                {
+                    <option value="@subj" selected="@(subj == Model.SelectedSubject)">@subj</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Класс:</label>
+            <select name="grade" class="form-select">
+                <option value="">Все классы</option>
+                @foreach (var gr in Model.Grades)
+                {
+                    <option value="@gr" selected="@(gr == Model.SelectedGrade)">@gr</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Жанр:</label>
+            <select name="genre" class="form-select">
+                <option value="">Все жанры</option>
+                @foreach (var gen in Model.Genres)
+                {
+                    <option value="@gen" selected="@(gen == Model.SelectedGenre)">@gen</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">&nbsp;</label>
+            <div>
+                <button type="submit" class="btn btn-primary">Фильтровать</button>
+                <a href="@Url.Action("Index")" class="btn btn-secondary">Сбросить</a>
+            </div>
+        </div>
+    </div>
+</form>
+
+@if (!Model.Courses.Any())
+{
+    <div class="alert alert-info">
+        Курсы не найдены
+    </div>
+}
+else
+{
+    <div class="course-tree">
+        <ul class="list-unstyled">
+            @foreach (var course in Model.Courses.OrderBy(c => c.Title))
+            {
+                <li class="mb-3">
+                    <h5>@course.Title</h5>
+                    @if (course.Modules.Any())
+                    {
+                        @await Html.PartialAsync("_ModuleTree", course.Modules)
+                    }
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+<style>
+    .course-tree ul {
+        margin-left: 20px;
+    }
+    .course-tree li {
+        list-style-type: none;
+        position: relative;
+        padding-left: 15px;
+    }
+    .course-tree li:before {
+        content: "▸";
+        position: absolute;
+        left: 0;
+    }
+</style>

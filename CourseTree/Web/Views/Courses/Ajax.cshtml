@@ -1,0 +1,167 @@
+﻿@{
+    ViewData["Title"] = "Курсы (AJAX)";
+}
+
+<h1>Курсы (AJAX версия)</h1>
+
+<div class="mb-3">
+    <a asp-action="Index" class="btn btn-info">Обычная версия</a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <label class="form-label">Предмет:</label>
+        <select id="subjectFilter" class="form-select">
+            <option value="">Все предметы</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Класс:</label>
+        <select id="gradeFilter" class="form-select">
+            <option value="">Все классы</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Жанр:</label>
+        <select id="genreFilter" class="form-select">
+            <option value="">Все жанры</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">&nbsp;</label>
+        <div>
+            <button id="filterBtn" class="btn btn-primary">Фильтровать</button>
+            <button id="resetBtn" class="btn btn-secondary">Сбросить</button>
+        </div>
+    </div>
+</div>
+
+<div id="coursesContainer">
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Загрузка...</span>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Загрузка фильтров
+            $.get('/api/coursesapi/filters')
+                .done(function(data) {
+                    data.subjects.forEach(s => $('#subjectFilter').append(`<option value="${s}">${s}</option>`));
+                    data.grades.forEach(g => $('#gradeFilter').append(`<option value="${g}">${g}</option>`));
+                    data.genres.forEach(g => $('#genreFilter').append(`<option value="${g}">${g}</option>`));
+                })
+                .fail(function() {
+                    showError('Ошибка загрузки фильтров');
+                });
+
+            // Загрузка курсов
+            loadCourses();
+
+            // Обработчики событий
+            $('#filterBtn').click(loadCourses);
+            $('#resetBtn').click(function() {
+                $('#subjectFilter, #gradeFilter, #genreFilter').val('');
+                loadCourses();
+            });
+
+            // Фильтрация по Enter
+            $('#subjectFilter, #gradeFilter, #genreFilter').on('keypress', function(e) {
+                if (e.which === 13) {
+                    loadCourses();
+                }
+            });
+        });
+
+        function loadCourses() {
+            const params = {
+                subject: $('#subjectFilter').val(),
+                grade: $('#gradeFilter').val(),
+                genre: $('#genreFilter').val()
+            };
+
+            $('#coursesContainer').html('<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Загрузка...</span></div></div>');
+
+            $.get('/api/coursesapi', params)
+                .done(function(courses) {
+                    if (courses.length === 0) {
+                        $('#coursesContainer').html('<div class="alert alert-info">Курсы не найдены</div>');
+                        return;
+                    }
+
+                    let html = '<div class="course-tree"><ul class="list-unstyled">';
+                    courses.forEach(course => {
+                        html += `<li class="mb-3"><h5>${escapeHtml(course.title)}</h5>`;
+                        if (course.modules && course.modules.length > 0) {
+                            html += renderModules(course.modules);
+                        }
+                        html += '</li>';
+                    });
+                    html += '</ul></div>';
+                    $('#coursesContainer').html(html);
+                })
+                .fail(function() {
+                    showError('Ошибка загрузки курсов');
+                });
+        }
+
+        function renderModules(modules) {
+            if (!modules || modules.length === 0) return '';
+
+            // Сортировка модулей по Order
+            modules.sort((a, b) => (a.order || 999999) - (b.order || 999999));
+
+            let html = '<ul class="list-unstyled">';
+            modules.forEach(mod => {
+                html += '<li>';
+                if (mod.num && mod.title) {
+                    html += `<span>${escapeHtml(mod.num)} ${escapeHtml(mod.title)}</span>`;
+                } else if (mod.title) {
+                    html += `<span>${escapeHtml(mod.title)}</span>`;
+                }
+                if (mod.children && mod.children.length > 0) {
+                    html += renderModules(mod.children);
+                }
+                html += '</li>';
+            });
+            html += '</ul>';
+            return html;
+        }
+
+        function showError(message) {
+            $('#coursesContainer').html(`<div class="alert alert-danger">${message}</div>`);
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text ? text.replace(/[&<>"']/g, m => map[m]) : '';
+        }
+    </script>
+
+    <style>
+        .course-tree ul {
+            margin-left: 20px;
+        }
+
+        .course-tree li {
+            list-style-type: none;
+            position: relative;
+            padding-left: 15px;
+        }
+
+            .course-tree li:before {
+                content: "▸";
+                position: absolute;
+                left: 0;
+            }
+    </style>
+}

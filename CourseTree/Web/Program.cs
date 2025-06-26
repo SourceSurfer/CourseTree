@@ -1,7 +1,21 @@
+﻿using System.Data;
+using Microsoft.Data.SqlClient;
+using Data.Repositories;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Системная конфигурация автоматически читает appsettings.json и appsettings.{Environment}.json
+
+// 1. Регистрируем MVC
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddControllers();
+
+builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+builder.Services.AddTransient<IDbConnection>(
+    sp => new SqlConnection(builder.Configuration.GetConnectionString("Default")));
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 
 var app = builder.Build();
 
@@ -9,7 +23,6 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -23,5 +36,8 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// Map API controllers
+app.MapControllers();
 
 app.Run();
