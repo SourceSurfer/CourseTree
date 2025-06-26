@@ -1,0 +1,24 @@
+﻿@model IEnumerable<Data.Models.ModuleDto>
+@if (Model != null && Model.Any())
+{
+    <ul class="list-unstyled">
+        @foreach (var mod in Model.OrderBy(m => m.Order ?? int.MaxValue))
+        {
+            <li>
+                @if (!string.IsNullOrEmpty(mod.Num) && !string.IsNullOrEmpty(mod.Title))
+                {
+                    <span>@mod.Num @mod.Title</span>
+                }
+                else if (!string.IsNullOrEmpty(mod.Title))
+                {
+                    <span>@mod.Title</span>
+                }
+                
+                @if (mod.Children != null && mod.Children.Any())
+                {
+                    @await Html.PartialAsync("_ModuleTree", mod.Children)
+                }
+            </li>
+        }
+    </ul>
+}
