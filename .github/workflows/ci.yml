@@ -17,11 +17,15 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Locate solution
+        id: sln
+        run: echo "solution=$(find . -name '*.sln' | head -n1)" >> $GITHUB_OUTPUT
+      
       - name: Restore
-        run: dotnet restore CourseTree.sln
-
-      - name: Build (Release)
-        run: dotnet build CourseTree.sln -c Release --no-restore
-
+        run: dotnet restore "${{ steps.sln.outputs.solution }}"
+      
+      - name: Build
+        run: dotnet build "${{ steps.sln.outputs.solution }}" -c Release --no-restore
+      
       - name: Test
-        run: dotnet test Tests/Tests.csproj --no-build --verbosity normal
+        run: dotnet test Tests/Tests.csproj --no-build
