@@ -404,3 +404,5 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/CourseTree/Web/appsettings.Development.json
+/CourseTree/Web/appsettings.json
